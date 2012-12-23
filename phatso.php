@@ -79,9 +79,10 @@ class Phatso
 			$ctrl = "/$ctrl";
 		}
 
+		$this->request = new StdClass;
+		$this->request->url = $ctrl;
+
 		$this->web_root = rtrim($this->web_root, '/') . '/';
-		echo "ctrl: $ctrl<br>\n";
-		echo "root: " . $this->web_root . "<br>\n";
 
 		$action = '';
 		$params = array();
@@ -90,16 +91,20 @@ class Phatso
 				$action = $route;
 				if(!empty($matches[1])) {
 					$params = explode('/', trim($matches[1], '/'));
+					$this->request->params = $params;
 				}
 				break;
 			}
 		}
 
 		if(!function_exists("exec_{$action}")) {
-			die("404");
-			$this->status('404', 'File not found');
+			if(function_exists("exec_404")) {
+				return call_user_func("exec_404", $this, $params);
+			} else {
+				$this->status('404', 'File not found');
+			}
 		}
-		@call_user_func("exec_{$action}", &$this, $params);
+		call_user_func("exec_{$action}", $this, $params);
 	}
 
 	/**
